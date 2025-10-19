@@ -1,0 +1,5 @@
+{
+  "name": "n8n Workflow Explorer",
+  "description": "A professional, mobile-responsive application to explore and manage n8n workflows. It features grid/list views, detailed workflow pages, powerful search and tag-based filtering, and a sleek dark mode, all populated from a data source.",
+  "requestFramePermissions": []
+}
