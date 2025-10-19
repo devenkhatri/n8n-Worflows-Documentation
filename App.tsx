@@ -28,6 +28,7 @@ const App: React.FC = () => {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedWorkflow, setSelectedWorkflow] = useState<Workflow | null>(null);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(() => localStorage.getItem('n8n-lastUpdated'));
 
   const loadWorkflows = useCallback(async (currentSheetId: string, currentSheetName: string, currentApiKey: string) => {
     if (!currentSheetId || !currentApiKey) {
@@ -39,6 +40,9 @@ const App: React.FC = () => {
       setError(null);
       const data = await fetchWorkflows(currentSheetId, currentSheetName, currentApiKey);
       setWorkflows(data);
+      const timestamp = new Date().toISOString();
+      localStorage.setItem('n8n-lastUpdated', timestamp);
+      setLastUpdated(timestamp);
       setAppState('list');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred while fetching data.');
@@ -73,12 +77,20 @@ const App: React.FC = () => {
     loadWorkflows(newSheetId, newSheetName, newApiKey);
   };
 
-  const allTags = useMemo(() => {
-    const tags = new Set<string>();
+  const topTagsWithCounts = useMemo(() => {
+    const tagCounts: { [key: string]: number } = {};
     workflows.forEach(workflow => {
-      workflow.tags.forEach(tag => tags.add(tag));
+      workflow.tags.forEach(tag => {
+        if (tag) {
+          tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+        }
+      });
     });
-    return Array.from(tags).sort();
+    
+    return Object.entries(tagCounts)
+      .map(([tag, count]) => ({ tag, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 20);
   }, [workflows]);
 
   const filteredWorkflows = useMemo(() => {
@@ -155,7 +167,6 @@ const App: React.FC = () => {
                 initialApiKey={apiKey}
                 onSave={handleSaveSettings}
                 onBack={handleBackToList}
-                // FIX: Removed redundant `appState !== 'list'` check, as `appState` is already known to be 'settings' in this block.
                 isInitialSetup={!workflows.length}
               />
           );
@@ -169,7 +180,7 @@ const App: React.FC = () => {
         return (
           <>
             <TagFilter 
-              tags={allTags} 
+              tags={topTagsWithCounts} 
               selectedTags={selectedTags} 
               onTagSelect={handleTagSelect}
               onClearFilters={clearFilters}
@@ -199,6 +210,7 @@ const App: React.FC = () => {
           isDarkMode={isDarkMode}
           onDarkModeToggle={handleDarkModeToggle}
           onShowSettings={() => setAppState('settings')}
+          lastUpdated={lastUpdated}
         />
       )}
       <main className="max-w-7xl mx-auto">
