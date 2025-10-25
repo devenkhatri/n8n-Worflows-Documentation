@@ -12,15 +12,20 @@ import Spinner from './components/Spinner';
 type AppState = 'loading' | 'settings' | 'error' | 'list' | 'detail';
 
 const App: React.FC = () => {
+  const isConfigFromEnv =
+    typeof process !== 'undefined' &&
+    process.env &&
+    !!(process.env.GOOGLE_API_KEY && process.env.GOOGLE_SHEET_ID);
+
   const [appState, setAppState] = useState<AppState>('loading');
   
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [error, setError] = useState<string | null>(null);
   
   // Settings State
-  const [sheetId, setSheetId] = useState<string>(() => localStorage.getItem('n8n-sheetId') || '');
-  const [sheetName, setSheetName] = useState<string>(() => localStorage.getItem('n8n-sheetName') || 'Sheet1');
-  const [apiKey, setApiKey] = useState<string>(() => localStorage.getItem('n8n-apiKey') || '');
+  const [sheetId, setSheetId] = useState<string>(() => isConfigFromEnv ? process.env.GOOGLE_SHEET_ID! : (localStorage.getItem('n8n-sheetId') || ''));
+  const [sheetName, setSheetName] = useState<string>(() => isConfigFromEnv ? (process.env.GOOGLE_SHEET_NAME || 'Sheet1') : (localStorage.getItem('n8n-sheetName') || 'Sheet1'));
+  const [apiKey, setApiKey] = useState<string>(() => isConfigFromEnv ? process.env.GOOGLE_API_KEY! : (localStorage.getItem('n8n-apiKey') || ''));
 
   // UI State
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
@@ -32,6 +37,11 @@ const App: React.FC = () => {
 
   const loadWorkflows = useCallback(async (currentSheetId: string, currentSheetName: string, currentApiKey: string) => {
     if (!currentSheetId || !currentApiKey) {
+      if (isConfigFromEnv) {
+        setError('Environment variables for Google Sheets are defined but invalid. Please check them.');
+        setAppState('error');
+        return;
+      }
       setAppState('settings');
       return;
     }
@@ -48,7 +58,7 @@ const App: React.FC = () => {
       setError(err instanceof Error ? err.message : 'An unknown error occurred while fetching data.');
       setAppState('error');
     }
-  }, []);
+  }, [isConfigFromEnv]);
 
   useEffect(() => {
     loadWorkflows(sheetId, sheetName, apiKey);
@@ -68,6 +78,8 @@ const App: React.FC = () => {
   }, [isDarkMode]);
 
   const handleSaveSettings = (newSheetId: string, newSheetName: string, newApiKey: string) => {
+    if (isConfigFromEnv) return;
+
     localStorage.setItem('n8n-sheetId', newSheetId);
     localStorage.setItem('n8n-sheetName', newSheetName);
     localStorage.setItem('n8n-apiKey', newApiKey);
@@ -156,7 +168,7 @@ const App: React.FC = () => {
               <pre className="bg-slate-100 dark:bg-slate-800/50 p-4 rounded-md text-sm text-red-800 dark:text-red-300 whitespace-pre-wrap font-mono break-words">
                 {error}
               </pre>
-               <button onClick={() => setAppState('settings')} className="mt-6 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700">
+               <button onClick={() => setAppState('settings')} className="mt-6 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50" disabled={isConfigFromEnv}>
                 Go to Settings
               </button>
             </div>
@@ -172,6 +184,7 @@ const App: React.FC = () => {
                 onSave={handleSaveSettings}
                 onBack={handleBackToList}
                 isInitialSetup={!workflows.length}
+                isConfigFromEnv={isConfigFromEnv}
               />
           );
 
@@ -217,6 +230,7 @@ const App: React.FC = () => {
           onShowSettings={() => setAppState('settings')}
           lastUpdated={lastUpdated}
           totalWorkflows={workflows.length}
+          showSettingsButton={!isConfigFromEnv}
         />
       )}
       <main className="max-w-7xl mx-auto">

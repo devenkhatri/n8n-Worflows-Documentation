@@ -20,6 +20,7 @@ interface HeaderProps {
   onShowSettings: () => void;
   lastUpdated: string | null;
   totalWorkflows: number;
+  showSettingsButton: boolean;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -33,6 +34,7 @@ const Header: React.FC<HeaderProps> = ({
   onShowSettings,
   lastUpdated,
   totalWorkflows,
+  showSettingsButton,
 }) => {
   const formattedTimestamp = useMemo(() => {
     if (!lastUpdated) return null;
@@ -115,13 +117,15 @@ const Header: React.FC<HeaderProps> = ({
               >
                 <RefreshIcon className="w-5 h-5" />
               </button>
-               <button
-                onClick={onShowSettings}
-                className="p-2 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                aria-label="Settings"
-              >
-                <SettingsIcon className="w-5 h-5" />
-              </button>
+              {showSettingsButton && (
+                <button
+                  onClick={onShowSettings}
+                  className="p-2 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  aria-label="Settings"
+                >
+                  <SettingsIcon className="w-5 h-5" />
+                </button>
+              )}
             </div>
           </div>
         </div>
