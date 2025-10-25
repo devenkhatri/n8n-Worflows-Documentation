@@ -12,20 +12,48 @@ import Spinner from './components/Spinner';
 type AppState = 'loading' | 'settings' | 'error' | 'list' | 'detail';
 
 const App: React.FC = () => {
-  const isConfigFromEnv =
-    typeof process !== 'undefined' &&
-    process.env &&
-    !!(process.env.NEXT_PUBLIC_GOOGLE_API_KEY && process.env.NEXT_PUBLIC_GOOGLE_SHEET_ID);
+  // Update the environment variable access logic
+  const getEnvVar = (key: string) => {
+    const viteKey = `VITE_${key}`;
+    const nextKey = `NEXT_PUBLIC_${key}`;
+    
+    // Try import.meta.env first (Vite's way)
+    if (import.meta.env[viteKey]) {
+      return import.meta.env[viteKey];
+    }
+    
+    // Fallback to process.env if available
+    if (typeof process !== 'undefined' && process.env && process.env[nextKey]) {
+      return process.env[nextKey];
+    }
+    
+    return undefined;
+  };
+
+  const envApiKey = getEnvVar('GOOGLE_API_KEY');
+  const envSheetId = getEnvVar('GOOGLE_SHEET_ID');
+  const envSheetName = getEnvVar('GOOGLE_SHEET_NAME');
+
+  const isConfigFromEnv = !!(envApiKey && envSheetId);
 
   const [appState, setAppState] = useState<AppState>('loading');
-  
+
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Settings State
-  const [sheetId, setSheetId] = useState<string>(() => isConfigFromEnv ? process.env.NEXT_PUBLIC_GOOGLE_SHEET_ID! : (localStorage.getItem('n8n-sheetId') || ''));
-  const [sheetName, setSheetName] = useState<string>(() => isConfigFromEnv ? (process.env.NEXT_PUBLIC_GOOGLE_SHEET_NAME || 'Sheet1') : (localStorage.getItem('n8n-sheetName') || 'Sheet1'));
-  const [apiKey, setApiKey] = useState<string>(() => isConfigFromEnv ? process.env.NEXT_PUBLIC_GOOGLE_API_KEY! : (localStorage.getItem('n8n-apiKey') || ''));
+  const [sheetId, setSheetId] = useState<string>(() => {
+    if (isConfigFromEnv && envSheetId) return envSheetId;
+    try { return localStorage.getItem('n8n-sheetId') || ''; } catch { return ''; }
+  });
+  const [sheetName, setSheetName] = useState<string>(() => {
+    if (isConfigFromEnv && envSheetName) return envSheetName || 'Sheet1';
+    try { return localStorage.getItem('n8n-sheetName') || 'Sheet1'; } catch { return 'Sheet1'; }
+  });
+  const [apiKey, setApiKey] = useState<string>(() => {
+    if (isConfigFromEnv && envApiKey) return envApiKey;
+    try { return localStorage.getItem('n8n-apiKey') || ''; } catch { return ''; }
+  });
 
   // UI State
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
@@ -37,11 +65,8 @@ const App: React.FC = () => {
 
   const loadWorkflows = useCallback(async (currentSheetId: string, currentSheetName: string, currentApiKey: string) => {
     if (!currentSheetId || !currentApiKey) {
-      if (isConfigFromEnv) {
-        setError('Environment variables for Google Sheets are defined but invalid. Please check them.');
-        setAppState('error');
-        return;
-      }
+      // If we don't have required config, show settings so the user can enter it.
+      setError('Missing configuration: please provide your Google Sheet ID and API Key.');
       setAppState('settings');
       return;
     }
@@ -55,12 +80,18 @@ const App: React.FC = () => {
       setLastUpdated(timestamp);
       setAppState('list');
     } catch (err) {
+      // When fetching fails (network, API, parsing), expose the error but show Settings
+      // so the user can correct configuration and retry.
       setError(err instanceof Error ? err.message : 'An unknown error occurred while fetching data.');
-      setAppState('error');
+      setAppState('settings');
     }
   }, [isConfigFromEnv]);
 
   useEffect(() => {
+    console.log('Initial load of workflows');
+    console.log({ sheetId, sheetName, apiKey });
+    console.log('isConfigFromEnv:', isConfigFromEnv);
+    console.log(getEnvVar('NEXT_PUBLIC_GOOGLE_API_KEY'), process.env.NEXT_PUBLIC_GOOGLE_API_KEY)
     loadWorkflows(sheetId, sheetName, apiKey);
   }, []);
   
@@ -78,8 +109,7 @@ const App: React.FC = () => {
   }, [isDarkMode]);
 
   const handleSaveSettings = (newSheetId: string, newSheetName: string, newApiKey: string) => {
-    if (isConfigFromEnv) return;
-
+    // Allow saving even when env variables exist so users can override/repair config.
     localStorage.setItem('n8n-sheetId', newSheetId);
     localStorage.setItem('n8n-sheetName', newSheetName);
     localStorage.setItem('n8n-apiKey', newApiKey);
@@ -185,6 +215,7 @@ const App: React.FC = () => {
                 onBack={handleBackToList}
                 isInitialSetup={!workflows.length}
                 isConfigFromEnv={isConfigFromEnv}
+                error={error} // Pass the error message to Settings
               />
           );
 

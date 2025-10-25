@@ -8,9 +8,11 @@ interface SettingsProps {
   onBack: () => void;
   isInitialSetup: boolean;
   isConfigFromEnv: boolean;
+  // New optional prop to display an error message when present
+  errorMessage?: string;
 }
 
-const Settings: React.FC<SettingsProps> = ({ initialSheetId, initialSheetName, initialApiKey, onSave, onBack, isInitialSetup, isConfigFromEnv }) => {
+const Settings: React.FC<SettingsProps> = ({ initialSheetId, initialSheetName, initialApiKey, onSave, onBack, isInitialSetup, isConfigFromEnv, errorMessage }) => {
   const [sheetId, setSheetId] = useState(initialSheetId);
   const [sheetName, setSheetName] = useState(initialSheetName);
   const [apiKey, setApiKey] = useState(initialApiKey);
@@ -52,11 +54,19 @@ const Settings: React.FC<SettingsProps> = ({ initialSheetId, initialSheetName, i
                 }
             </p>
         </div>
+
+        {/* If there's an error from attempting to fetch, surface it here */}
+        {errorMessage && (
+          <div className="mb-6 p-4 rounded border border-red-200 bg-red-50 text-sm text-red-800 dark:bg-red-900/40 dark:border-red-700">
+            <strong className="block font-medium mb-1">Unable to load workflows</strong>
+            <div className="whitespace-pre-wrap">{errorMessage}</div>
+          </div>
+        )}
         
         {isConfigFromEnv && (
             <div className="bg-primary-50 dark:bg-primary-500/10 p-4 rounded-lg border border-primary-200 dark:border-primary-500/20 mb-6 text-sm text-primary-800 dark:text-primary-200">
                 <p>
-                Configuration is managed by environment variables and cannot be changed here. The values from environment variables are being used.
+                Configuration values were detected from environment variables. You can edit them here to override or repair the connection.
                 </p>
             </div>
         )}
@@ -72,8 +82,7 @@ const Settings: React.FC<SettingsProps> = ({ initialSheetId, initialSheetName, i
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               placeholder="Enter your Google API Key"
-              className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={isConfigFromEnv}
+              className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
              <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
               Your API key is stored only in your browser's local storage and is not shared.
@@ -90,8 +99,7 @@ const Settings: React.FC<SettingsProps> = ({ initialSheetId, initialSheetName, i
               value={sheetId}
               onChange={(e) => setSheetId(e.target.value)}
               placeholder="e.g., 1-riOxMmv60xkGW6R1GEzLwtPoXnHdxFQz8VJXpBtN_o"
-              className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={isConfigFromEnv}
+              className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
             <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
               Found in the URL: `.../d/`<strong className="text-primary-500 font-semibold">{`SHEET_ID`}</strong>`/edit...`
@@ -108,8 +116,7 @@ const Settings: React.FC<SettingsProps> = ({ initialSheetId, initialSheetName, i
               value={sheetName}
               onChange={(e) => setSheetName(e.target.value)}
               placeholder="e.g., Sheet1"
-              className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={isConfigFromEnv}
+              className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
              <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
               The name of the tab in your spreadsheet where the data is located.
@@ -120,7 +127,7 @@ const Settings: React.FC<SettingsProps> = ({ initialSheetId, initialSheetName, i
             <button
               onClick={handleSave}
               className="inline-flex items-center justify-center px-5 py-2.5 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={!sheetId || !sheetName || !apiKey || isConfigFromEnv}
+              disabled={!sheetId || !sheetName || !apiKey}
             >
               Save and Fetch Data
             </button>
