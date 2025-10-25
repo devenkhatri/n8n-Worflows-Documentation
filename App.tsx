@@ -88,10 +88,6 @@ const App: React.FC = () => {
   }, [isConfigFromEnv]);
 
   useEffect(() => {
-    console.log('Initial load of workflows');
-    console.log({ sheetId, sheetName, apiKey });
-    console.log('isConfigFromEnv:', isConfigFromEnv);
-    console.log(getEnvVar('NEXT_PUBLIC_GOOGLE_API_KEY'), process.env.NEXT_PUBLIC_GOOGLE_API_KEY)
     loadWorkflows(sheetId, sheetName, apiKey);
   }, []);
   
