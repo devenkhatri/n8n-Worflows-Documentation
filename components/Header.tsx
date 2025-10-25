@@ -7,6 +7,7 @@ import MoonIcon from './icons/MoonIcon';
 import SettingsIcon from './icons/SettingsIcon';
 import Logo from './icons/Logo';
 import ClockIcon from './icons/ClockIcon';
+import RefreshIcon from './icons/RefreshIcon';
 
 interface HeaderProps {
   searchTerm: string;
@@ -15,8 +16,10 @@ interface HeaderProps {
   onViewModeChange: (mode: ViewMode) => void;
   isDarkMode: boolean;
   onDarkModeToggle: () => void;
+  onRefresh: () => void;
   onShowSettings: () => void;
   lastUpdated: string | null;
+  totalWorkflows: number;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -26,8 +29,10 @@ const Header: React.FC<HeaderProps> = ({
   onViewModeChange,
   isDarkMode,
   onDarkModeToggle,
+  onRefresh,
   onShowSettings,
   lastUpdated,
+  totalWorkflows,
 }) => {
   const formattedTimestamp = useMemo(() => {
     if (!lastUpdated) return null;
@@ -47,9 +52,15 @@ const Header: React.FC<HeaderProps> = ({
           <div className="flex items-center gap-4">
             <Logo />
             {formattedTimestamp && (
-              <div className="hidden lg:flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 border-l border-slate-200 dark:border-slate-700 pl-4">
-                <ClockIcon className="w-4 h-4" />
-                <span>Last updated: {formattedTimestamp}</span>
+              <div className="hidden lg:flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400 border-l border-slate-200 dark:border-slate-700 pl-4">
+                <div className="flex items-center gap-1.5">
+                  <ClockIcon className="w-4 h-4" />
+                  <span>Last updated: {formattedTimestamp}</span>
+                </div>
+                <div className="h-4 border-l border-slate-200 dark:border-slate-700"></div>
+                <div className="font-medium">
+                  <span>{totalWorkflows} Workflows</span>
+                </div>
               </div>
             )}
           </div>
@@ -96,6 +107,13 @@ const Header: React.FC<HeaderProps> = ({
                 aria-label="Toggle Dark Mode"
               >
                 {isDarkMode ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
+              </button>
+              <button
+                onClick={onRefresh}
+                className="p-2 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                aria-label="Refresh Workflows"
+              >
+                <RefreshIcon className="w-5 h-5" />
               </button>
                <button
                 onClick={onShowSettings}

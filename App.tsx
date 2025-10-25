@@ -77,6 +77,10 @@ const App: React.FC = () => {
     loadWorkflows(newSheetId, newSheetName, newApiKey);
   };
 
+  const handleRefresh = useCallback(() => {
+    loadWorkflows(sheetId, sheetName, apiKey);
+  }, [sheetId, sheetName, apiKey, loadWorkflows]);
+
   const topTagsWithCounts = useMemo(() => {
     const tagCounts: { [key: string]: number } = {};
     workflows.forEach(workflow => {
@@ -209,8 +213,10 @@ const App: React.FC = () => {
           onViewModeChange={setViewMode}
           isDarkMode={isDarkMode}
           onDarkModeToggle={handleDarkModeToggle}
+          onRefresh={handleRefresh}
           onShowSettings={() => setAppState('settings')}
           lastUpdated={lastUpdated}
+          totalWorkflows={workflows.length}
         />
       )}
       <main className="max-w-7xl mx-auto">
