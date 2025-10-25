@@ -15,7 +15,7 @@ const App: React.FC = () => {
   const isConfigFromEnv =
     typeof process !== 'undefined' &&
     process.env &&
-    !!(process.env.GOOGLE_API_KEY && process.env.GOOGLE_SHEET_ID);
+    !!(process.env.NEXT_PUBLIC_GOOGLE_API_KEY && process.env.NEXT_PUBLIC_GOOGLE_SHEET_ID);
 
   const [appState, setAppState] = useState<AppState>('loading');
   
@@ -23,9 +23,9 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   
   // Settings State
-  const [sheetId, setSheetId] = useState<string>(() => isConfigFromEnv ? process.env.GOOGLE_SHEET_ID! : (localStorage.getItem('n8n-sheetId') || ''));
-  const [sheetName, setSheetName] = useState<string>(() => isConfigFromEnv ? (process.env.GOOGLE_SHEET_NAME || 'Sheet1') : (localStorage.getItem('n8n-sheetName') || 'Sheet1'));
-  const [apiKey, setApiKey] = useState<string>(() => isConfigFromEnv ? process.env.GOOGLE_API_KEY! : (localStorage.getItem('n8n-apiKey') || ''));
+  const [sheetId, setSheetId] = useState<string>(() => isConfigFromEnv ? process.env.NEXT_PUBLIC_GOOGLE_SHEET_ID! : (localStorage.getItem('n8n-sheetId') || ''));
+  const [sheetName, setSheetName] = useState<string>(() => isConfigFromEnv ? (process.env.NEXT_PUBLIC_GOOGLE_SHEET_NAME || 'Sheet1') : (localStorage.getItem('n8n-sheetName') || 'Sheet1'));
+  const [apiKey, setApiKey] = useState<string>(() => isConfigFromEnv ? process.env.NEXT_PUBLIC_GOOGLE_API_KEY! : (localStorage.getItem('n8n-apiKey') || ''));
 
   // UI State
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
