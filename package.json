@@ -5,7 +5,6 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "test": "vitest",
     "build": "vite build",
     "preview": "vite preview"
   },
@@ -14,19 +13,9 @@
     "react-dom": "^19.2.0"
   },
   "devDependencies": {
-    "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^14.3.1",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
-    "jsdom": "^22.1.0",
     "typescript": "~5.8.2",
-    "vite": "^6.2.0",
-    "vitest": "^1.6.1"
-  },
-  "vitest": {
-    "environment": "jsdom",
-    "setupFiles": [
-      "./vitest.setup.ts"
-    ]
+    "vite": "^6.2.0"
   }
 }

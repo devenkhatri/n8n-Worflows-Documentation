@@ -22,22 +22,9 @@ const getInitialAppState = (): AppState => {
 };
 
 const App: React.FC = () => {
-  // Update the environment variable access logic
-  const getEnvVar = (key: string) => {
-    const viteKey = `VITE_${key}`;
-    const nextKey = `NEXT_PUBLIC_${key}`;
-    
-    // Try import.meta.env first (Vite's way)
-    if ((import.meta.env as any)[viteKey]) {
-      return (import.meta.env as any)[viteKey];
-    }
-    
-    // Fallback to process.env if available
-    if (typeof process !== 'undefined' && process.env && process.env[nextKey]) {
-      return process.env[nextKey];
-    }
-    
-    return undefined;
+  // Get environment variables
+  const getEnvVar = (key: keyof ImportMetaEnv): string | undefined => {
+    return import.meta.env[key];
   };
 
   const envApiKey = getEnvVar('GOOGLE_API_KEY');
