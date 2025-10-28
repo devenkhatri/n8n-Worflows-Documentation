@@ -8,6 +8,7 @@ export interface Workflow {
   outputDetails: string;
   workflowUrl: string;
   markdownUrl: string;
+  workflowJson: string;
   tags: string[];
 }
 

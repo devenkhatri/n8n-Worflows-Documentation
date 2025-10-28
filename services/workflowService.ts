@@ -35,6 +35,7 @@ const parseRowsToWorkflows = (rows: string[][], sheetId: string): Workflow[] => 
       outputDetails: getValue('outputDetails'),
       workflowUrl: getValue('workflowUrl'),
       markdownUrl: getValue('markdownUrl'),
+      workflowJson: getValue('workflowJson'),
       tags: tagsRaw ? tagsRaw.split(',').map(tag => tag.trim()).filter(Boolean) : [],
     };
   }).filter(workflow => workflow.title);
@@ -53,7 +54,7 @@ export const fetchWorkflows = async (sheetId: string, sheetName: string, apiKey:
     throw new Error("Configuration Error: The Sheet Name is missing. Please provide it on the settings page.");
   }
 
-  const sheetRange = `${sheetName}!A:H`;
+  const sheetRange = `${sheetName}!A:J`;
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${sheetRange}?key=${apiKey}`;
 
   try {
