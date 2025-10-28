@@ -98,7 +98,7 @@ const Settings: React.FC<SettingsProps> = ({ initialSheetId, initialSheetName, i
               id="sheetId"
               value={sheetId}
               onChange={(e) => setSheetId(e.target.value)}
-              placeholder="e.g., 1-riOxMmv60xkGW6R1GEzLwtPoXnHdxFQz8VJXpBtN_o"
+              placeholder="e.g., 3-riOxhmu90xkGW2R1GEzLwtPoYnHexFQz8VJXpBtN_o"
               className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
             <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
