@@ -8,8 +8,18 @@ import WorkflowList from './components/WorkflowList';
 import WorkflowDetail from './components/WorkflowDetail';
 import Settings from './components/Settings';
 import Spinner from './components/Spinner';
+import { getWorkflowDetailPath, parseWorkflowIdFromPath } from './utils/routing';
 
 type AppState = 'loading' | 'settings' | 'error' | 'list' | 'detail';
+
+// Function to determine initial app state based on URL
+const getInitialAppState = (): AppState => {
+  const path = window.location.pathname;
+  if (path.startsWith('/workflow/')) {
+    return 'loading';
+  }
+  return 'loading';
+};
 
 const App: React.FC = () => {
   // Update the environment variable access logic
@@ -18,8 +28,8 @@ const App: React.FC = () => {
     const nextKey = `NEXT_PUBLIC_${key}`;
     
     // Try import.meta.env first (Vite's way)
-    if (import.meta.env[viteKey]) {
-      return import.meta.env[viteKey];
+    if ((import.meta.env as any)[viteKey]) {
+      return (import.meta.env as any)[viteKey];
     }
     
     // Fallback to process.env if available
@@ -36,7 +46,7 @@ const App: React.FC = () => {
 
   const isConfigFromEnv = !!(envApiKey && envSheetId);
 
-  const [appState, setAppState] = useState<AppState>('loading');
+  const [appState, setAppState] = useState<AppState>(getInitialAppState());
 
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -93,9 +103,39 @@ const App: React.FC = () => {
     }
   }, [isConfigFromEnv]);
 
+  // Combined data loading and routing effect
   useEffect(() => {
-    loadWorkflows(sheetId, sheetName, apiKey);
-  }, []);
+    const initializeApp = async () => {
+      const workflowId = parseWorkflowIdFromPath();
+      
+      try {
+        const loadedWorkflows = await fetchWorkflows(sheetId, sheetName, apiKey);
+        setWorkflows(loadedWorkflows);
+        
+        if (workflowId) {
+          const workflow = loadedWorkflows.find(w => w.id === workflowId);
+          if (workflow) {
+            setSelectedWorkflow(workflow);
+            setAppState('detail');
+          } else {
+            // If workflow not found, show error state
+            setAppState('list');
+          }
+        } else {
+          setAppState('list');
+        }
+        
+        const timestamp = new Date().toISOString();
+        localStorage.setItem('n8n-lastUpdated', timestamp);
+        setLastUpdated(timestamp);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An unknown error occurred while fetching data.');
+        setAppState('settings');
+      }
+    };
+
+    initializeApp();
+  }, [sheetId, sheetName, apiKey]);
   
   useEffect(() => {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -174,16 +214,63 @@ const App: React.FC = () => {
   const handleSelectWorkflow = (workflow: Workflow) => {
     setSelectedWorkflow(workflow);
     setAppState('detail');
+    // Update URL without refreshing the page
+    window.history.pushState({}, '', getWorkflowDetailPath(workflow.id));
   };
 
   const handleBackToList = () => {
     setSelectedWorkflow(null);
     setAppState('list');
+    // Update URL to home page without refreshing
+    window.history.pushState({}, '', '/');
   };
+
+  // Handle browser back/forward buttons
+  useEffect(() => {
+    const handlePopState = () => {
+      const workflowId = parseWorkflowIdFromPath();
+      if (workflowId) {
+        const workflow = workflows.find(w => w.id === workflowId);
+        if (workflow) {
+          setSelectedWorkflow(workflow);
+          setAppState('detail');
+        } else {
+          // If workflow not found, redirect to home
+          window.history.pushState({}, '', '/');
+          setSelectedWorkflow(null);
+          setAppState('list');
+        }
+      } else {
+        setSelectedWorkflow(null);
+        setAppState('list');
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [workflows]);
   
   const renderContent = () => {
     switch (appState) {
       case 'loading':
+        const isDetailView = window.location.pathname.startsWith('/workflow/');
+        if (isDetailView) {
+          return (
+            <div className="p-4 sm:p-6 md:p-8">
+              <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm p-6 sm:p-8 border border-slate-200 dark:border-slate-800">
+                <div className="animate-pulse space-y-4">
+                  <div className="h-8 bg-slate-200 dark:bg-slate-800 rounded w-3/4"></div>
+                  <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/2"></div>
+                  <div className="space-y-3">
+                    <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded"></div>
+                    <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded"></div>
+                    <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        }
         return <div className="flex items-center justify-center h-[calc(100vh-4rem)]"><Spinner /></div>;
       
       case 'error':

@@ -29,8 +29,8 @@ const parseRowsToWorkflows = (rows: string[][], sheetId: string): Workflow[] => 
     const tagsRaw = getValue('tags');
 
     return {
-      id: `${sheetId}-${index}`,
-      title: getValue('title'),
+      id: `wf-${index+1}`,
+      title: (index+1)+"-"+getValue('title'),
       description: getValue('description'),
       inputDetails: getValue('inputDetails'),
       processSummary: getValue('processSummary'),

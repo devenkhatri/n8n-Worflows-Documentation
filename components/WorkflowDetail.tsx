@@ -33,7 +33,43 @@ const renderProcessSummary = (summary: string) => {
 
 
 const WorkflowDetail: React.FC<WorkflowDetailProps> = ({ workflow, onBack }) => {
-  console.log('Workflow JSON:', workflow);
+  const isLoading = window.location.pathname.startsWith('/workflow/') && !workflow;
+
+  if (isLoading) {
+    return (
+      <div className="p-4 sm:p-6 md:p-8 animate-fade-in">
+        <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm p-6 sm:p-8 border border-slate-200 dark:border-slate-800">
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 bg-slate-200 dark:bg-slate-800 rounded w-3/4"></div>
+            <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/2"></div>
+            <div className="space-y-3">
+              <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded"></div>
+              <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded"></div>
+              <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!workflow) {
+    return (
+      <div className="p-4 sm:p-6 md:p-8 animate-fade-in">
+        <button 
+          onClick={onBack}
+          className="mb-6 inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-700 text-sm font-medium rounded-md shadow-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+        >
+          &larr; Back to Workflows
+        </button>
+        <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm p-6 sm:p-8 border border-slate-200 dark:border-slate-800">
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white mb-2">Workflow Not Found</h1>
+          <p className="text-slate-500 dark:text-slate-400">The workflow you're looking for could not be found.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 sm:p-6 md:p-8 animate-fade-in">
         <button 
