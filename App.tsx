@@ -23,8 +23,9 @@ const getInitialAppState = (): AppState => {
 
 const App: React.FC = () => {
   // Get environment variables
-  const getEnvVar = (key: keyof ImportMetaEnv): string | undefined => {
-    return import.meta.env[key];
+  const getEnvVar = (key: string): string | undefined => {
+    const viteKey = `VITE_${key}`;
+    return (import.meta.env as any)[viteKey] || process.env[`NEXT_PUBLIC_${key}`];
   };
 
   const envApiKey = getEnvVar('GOOGLE_API_KEY');
@@ -33,24 +34,31 @@ const App: React.FC = () => {
 
   const isConfigFromEnv = !!(envApiKey && envSheetId);
 
-  const [appState, setAppState] = useState<AppState>(getInitialAppState());
+  // If we have env config, use it as initial state
+  const initialSheetId = isConfigFromEnv ? envSheetId : localStorage.getItem('n8n-sheetId') || '';
+  const initialSheetName = isConfigFromEnv ? (envSheetName || 'Sheet1') : (localStorage.getItem('n8n-sheetName') || 'Sheet1');
+  const initialApiKey = isConfigFromEnv ? envApiKey : localStorage.getItem('n8n-apiKey') || '';
+
+  // Start in loading state if we have config, otherwise show settings
+  const determineInitialState = (): AppState => {
+    const hasStoredConfig = !!(initialSheetId && initialApiKey);
+    const path = window.location.pathname;
+    
+    if (isConfigFromEnv || hasStoredConfig) {
+      return path.startsWith('/workflow/') ? 'loading' : 'loading';
+    }
+    return 'settings';
+  };
+
+  const [appState, setAppState] = useState<AppState>(determineInitialState());
 
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   // Settings State
-  const [sheetId, setSheetId] = useState<string>(() => {
-    if (isConfigFromEnv && envSheetId) return envSheetId;
-    try { return localStorage.getItem('n8n-sheetId') || ''; } catch { return ''; }
-  });
-  const [sheetName, setSheetName] = useState<string>(() => {
-    if (isConfigFromEnv && envSheetName) return envSheetName || 'Sheet1';
-    try { return localStorage.getItem('n8n-sheetName') || 'Sheet1'; } catch { return 'Sheet1'; }
-  });
-  const [apiKey, setApiKey] = useState<string>(() => {
-    if (isConfigFromEnv && envApiKey) return envApiKey;
-    try { return localStorage.getItem('n8n-apiKey') || ''; } catch { return ''; }
-  });
+  const [sheetId, setSheetId] = useState<string>(initialSheetId);
+  const [sheetName, setSheetName] = useState<string>(initialSheetName);
+  const [apiKey, setApiKey] = useState<string>(initialApiKey);
 
   // UI State
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
@@ -93,11 +101,24 @@ const App: React.FC = () => {
   // Combined data loading and routing effect
   useEffect(() => {
     const initializeApp = async () => {
+      // Only proceed if we have the necessary configuration
+      if (!sheetId || !apiKey) {
+        setAppState('settings');
+        return;
+      }
+
       const workflowId = parseWorkflowIdFromPath();
       
       try {
         const loadedWorkflows = await fetchWorkflows(sheetId, sheetName, apiKey);
         setWorkflows(loadedWorkflows);
+        
+        // Store configuration in localStorage if it's not from env
+        if (!isConfigFromEnv) {
+          localStorage.setItem('n8n-sheetId', sheetId);
+          localStorage.setItem('n8n-sheetName', sheetName);
+          localStorage.setItem('n8n-apiKey', apiKey);
+        }
         
         if (workflowId) {
           const workflow = loadedWorkflows.find(w => w.id === workflowId);
@@ -105,7 +126,6 @@ const App: React.FC = () => {
             setSelectedWorkflow(workflow);
             setAppState('detail');
           } else {
-            // If workflow not found, show error state
             setAppState('list');
           }
         } else {
@@ -116,13 +136,22 @@ const App: React.FC = () => {
         localStorage.setItem('n8n-lastUpdated', timestamp);
         setLastUpdated(timestamp);
       } catch (err) {
+        console.error('Error loading workflows:', err);
         setError(err instanceof Error ? err.message : 'An unknown error occurred while fetching data.');
-        setAppState('settings');
+        if (!isConfigFromEnv) {
+          setAppState('settings');
+        } else {
+          // If using env config and it fails, show error state
+          setAppState('error');
+        }
       }
     };
 
-    initializeApp();
-  }, [sheetId, sheetName, apiKey]);
+    // Auto-initialize if we're in loading state
+    if (appState === 'loading') {
+      initializeApp();
+    }
+  }, [sheetId, sheetName, apiKey, appState, isConfigFromEnv]);
   
   useEffect(() => {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
