@@ -7,6 +7,7 @@ const parseRowsToWorkflows = (rows: string[][], sheetId: string): Workflow[] => 
   }
 
   const headers = rows[0].map(h => h.trim());
+  console.log('Parsed Headers:', headers);
   const dataRows = rows.slice(1);
 
   const headerIndexMap: { [key: string]: number } = {};
@@ -14,6 +15,7 @@ const parseRowsToWorkflows = (rows: string[][], sheetId: string): Workflow[] => 
       const key = header.charAt(0).toLowerCase() + header.slice(1).replace(/\s+/g, '');
       headerIndexMap[key] = index;
   });
+  console.log('Processed Headers:', headerIndexMap);
   
   const requiredKeys = ['title', 'description', 'tags'];
   for (const key of requiredKeys) {
@@ -33,9 +35,9 @@ const parseRowsToWorkflows = (rows: string[][], sheetId: string): Workflow[] => 
       inputDetails: getValue('inputDetails'),
       processSummary: getValue('processSummary'),
       outputDetails: getValue('outputDetails'),
-      workflowUrl: getValue('workflowUrl'),
-      markdownUrl: getValue('markdownUrl'),
-      workflowJson: getValue('workflowJson'),
+      workflowUrl: getValue('workflowURL'),
+      markdownUrl: getValue('markdownURL'),
+      workflowJson: getValue('workflowJSON'),
       tags: tagsRaw ? tagsRaw.split(',').map(tag => tag.trim()).filter(Boolean) : [],
     };
   }).filter(workflow => workflow.title);

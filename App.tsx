@@ -58,10 +58,16 @@ const App: React.FC = () => {
   // UI State
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const handleSearchChange = useCallback((term: string) => {
+    setSearchTerm(term);
+    setCurrentPage(1); // Reset to first page when searching
+  }, []);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedWorkflow, setSelectedWorkflow] = useState<Workflow | null>(null);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   const [lastUpdated, setLastUpdated] = useState<string | null>(() => localStorage.getItem('n8n-lastUpdated'));
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(100);
 
   const loadWorkflows = useCallback(async (currentSheetId: string, currentSheetName: string, currentApiKey: string) => {
     if (!currentSheetId || !currentApiKey) {
@@ -153,10 +159,12 @@ const App: React.FC = () => {
         ? prev.filter(t => t !== tag)
         : [...prev, tag]
     );
+    setCurrentPage(1); // Reset to first page when filtering
   }, []);
 
   const clearFilters = useCallback(() => {
     setSelectedTags([]);
+    setCurrentPage(1); // Reset to first page when clearing filters
   }, []);
   
   const handleDarkModeToggle = useCallback(() => {
@@ -230,9 +238,23 @@ const App: React.FC = () => {
               onClearFilters={clearFilters}
             />
             {viewMode === 'grid' ? (
-              <WorkflowGrid workflows={filteredWorkflows} onSelectWorkflow={handleSelectWorkflow} />
+              <WorkflowGrid 
+                workflows={filteredWorkflows} 
+                onSelectWorkflow={handleSelectWorkflow}
+                currentPage={currentPage}
+                itemsPerPage={itemsPerPage}
+                onPageChange={setCurrentPage}
+                onItemsPerPageChange={setItemsPerPage}
+              />
             ) : (
-              <WorkflowList workflows={filteredWorkflows} onSelectWorkflow={handleSelectWorkflow} />
+              <WorkflowList 
+                workflows={filteredWorkflows} 
+                onSelectWorkflow={handleSelectWorkflow}
+                currentPage={currentPage}
+                itemsPerPage={itemsPerPage}
+                onPageChange={setCurrentPage}
+                onItemsPerPageChange={setItemsPerPage}
+              />
             )}
           </>
         );
@@ -248,7 +270,7 @@ const App: React.FC = () => {
       {showHeader && (
         <Header
           searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
+          onSearchChange={handleSearchChange}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
           isDarkMode={isDarkMode}
